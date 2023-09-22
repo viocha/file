@@ -6,7 +6,7 @@
 // @require     https://cdn.jsdelivr.net/npm/jquery@3
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
 // @require https://unpkg.byted-static.com/xgplayer/3.0.1/dist/index.min.js
-// @require https://unpkg.byted-static.com/xgplayer-hls/3.0.1/dist/index.min.js
+// @require https://unpkg.com/xgplayer-hls@3.0.9/dist/index.min.js
 // @require  https://unpkg.com/nprogress@0.2.0/nprogress.js
 // @version     1.0
 // @author      viocha
