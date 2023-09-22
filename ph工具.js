@@ -7,9 +7,9 @@
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
 // @require https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
-// @resource playerCss https://unpkg.byted-static.com/xgplayer/3.0.1/dist/index.min.css
-// @require  https://unpkg.com/nprogress@0.2.0/nprogress.js
-// @resource progressCss https://unpkg.com/nprogress@0.2.0/nprogress.css
+// @resource playerCss https://unpkg.com/xgplayer@latest/dist/index.min.css
+// @require  https://unpkg.com/nprogress@latest/nprogress.js
+// @resource progressCss https://unpkg.com/nprogress@latest/nprogress.css
 // @version     1.0
 // @author      viocha
 // @description 2023/9/17 11:34:50
@@ -33,6 +33,10 @@
 // ==/UserScript==
 
 // TODO: 监听js对象出现，或者直接请求js对象
+// TODO: 标记点
+//    全屏按钮
+//    一键idm下载
+
 
 if(location.href.includes('interstitial'))
 {
@@ -75,6 +79,7 @@ async function main() {
 
    const config = {
           "id": "mse",
+          "playbackRate": false,
           "playsinline": true,
           "plugins": [],
           "keyShortcut": "on",
@@ -110,7 +115,6 @@ async function main() {
                               ""
                     ]
           },
-          "pip": true,
           "closeVideoDblclick": false,
           "closeVideoTouch": false,
           "url": firstUrl
