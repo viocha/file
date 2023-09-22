@@ -5,11 +5,11 @@
 // @match       https://*.pornhub.com/interstitial*
 // @require     https://cdn.jsdelivr.net/npm/jquery@3
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
-// @require https://unpkg.com/xgplayer@latest/dist/index.min.js
-// @require https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
-// @resource playerCss https://unpkg.com/xgplayer@latest/dist/index.min.css
-// @require  https://unpkg.com/nprogress@latest/nprogress.js
-// @resource progressCss https://unpkg.com/nprogress@latest/nprogress.css
+// @require https://unpkg.com/xgplayer@3.0.9/dist/index.min.js
+// @require https://unpkg.com/xgplayer-hls@3.0.9/dist/index.min.js
+// @resource playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
+// @require  https://unpkg.com/nprogress@0.2.0/nprogress.js
+// @resource progressCss https://unpkg.com/nprogress@0.2.0/nprogress.css
 // @version     1.0
 // @author      viocha
 // @description 2023/9/17 11:34:50
