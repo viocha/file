@@ -44,8 +44,6 @@ if(location.href.includes('interstitial'))
     return;
 }
 
-const window=unsafeWindow;
-
 GM_addStyle(`
 :is(#player, .playerWrapper) > :not(#mse){
   display:none !important;
@@ -56,11 +54,11 @@ $(main);
 async function main() {
   const id=MGP.getPlayerIds()[0];
 /*   const player=MGP.players[id];
-  window.player=player; // 用于调试
+  unsafeWindow.player=player; // 用于调试
  */
     // 获取视频链接并排序
   const idNum=id.split('_')[1];
-  const videoList=window[`flashvars_${idNum}`].mediaDefinitions
+  const videoList=unsafeWindow[`flashvars_${idNum}`].mediaDefinitions
     .filter((x) => x.quality.constructor === String && parseInt(x.quality))
     .sort((x,y)=>Number(y.quality)-Number(x.quality)); // 按画质排序
   videoList.forEach(x=>x.videoUrl=x.videoUrl.replace('master.m3u8','index-v1-a1.m3u8')); // 避免一次请求
@@ -120,7 +118,7 @@ async function main() {
           "url": firstUrl
         };
   config.plugins.push(HlsPlayer);
-  window.player = new Player(config);
+  unsafeWindow.player = new Player(config);
 
 
   // ====================下载按钮=========================
@@ -162,7 +160,7 @@ async function main() {
   GM_addStyle(GM_getResourceText('progressCss'));
 
   // 下载m3u8视频的实现
-  window.downloadM3U8= function downloadM3U8(m3u8_link, name = "video") {
+  unsafeWindow.downloadM3U8= function downloadM3U8(m3u8_link, name = "video") {
     alert('开始下载：'+name);
     // 使用AJAX请求获取m3u8文件的内容
     fetch(m3u8_link)
