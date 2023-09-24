@@ -5,13 +5,9 @@
 // @match       https://*.pornhub.com/interstitial*
 // @require     https://cdn.jsdelivr.net/npm/jquery@3
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
-// @require https://unpkg.byted-static.com/xgplayer/3.0.1/dist/index.min.js
-// @require https://unpkg.byted-static.com/xgplayer-hls/3.0.1/dist/index.min.js
-// @resource playerCss https://unpkg.byted-static.com/xgplayer/3.0.1/dist/index.min.css
-/// @require  https://unpkg.com/nprogress@0.2.0/nprogress.js
-/// @resource progressCss https://unpkg.com/nprogress@0.2.0/nprogress.css
-/// @require https://unpkg.com/artplayer/dist/artplayer.js
-/// @require https://cdn.jsdelivr.net/npm/hls.js@canary
+// @require https://unpkg.com/xgplayer@latest/dist/index.min.js
+// @require https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
+// @resource playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
 // @version     1.0
 // @author      viocha
 // @description 2023/9/17 11:34:50
@@ -42,7 +38,7 @@ if (location.href.includes("interstitial")) {
 
 // 隐藏原始播放器
 GM_addStyle(`
-:is(#player, .playerWrapper) > :not(#mse, .artplayer-app){
+:is(#player, .playerWrapper) > :not(#mse){
   display:none !important;
 }
 `);
@@ -64,68 +60,7 @@ async function main() {
   // 最高画质的视频链接
   const firstUrl = videoList[0].videoUrl;
 
-  // =======================artplayer================================
 
-  /*
-  // 播放器html
-  $('#player, .playerWrapper').empty().append(`
-    <div class="artplayer-app" style="aspect-ratio: 16/9;"></div>
-  `);
-
-  // m3u8插件
-    function playM3u8(video, url, art) {
-      if (Hls.isSupported()) {
-          if (art.hls) art.hls.destroy();
-          const hls = new Hls();
-          hls.loadSource(url);
-          hls.attachMedia(video);
-          art.hls = hls;
-          art.on('destroy', () => hls.destroy());
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = url;
-      } else {
-          art.notice.show = 'Unsupported playback format: m3u8';
-      }
-  }
-
-
-
-    // 视频重点标记
-  const progressDot=flashvars.actionTags.split(',')
-                                    .map(x=>x.split(':'))
-                                    .map(x=>({text:x[0],time:+x[1]}));
-
-    unsafeWindow.art = new Artplayer({
-      container: ".artplayer-app",
-      type:'m3u8',
-      customType: {
-        m3u8: playM3u8,
-      },
-      url: firstUrl,
-      id:document.title,
-      muted: true,
-      autoplay: true,
-      autoSize: true,
-      playbackRate: false,
-      fullscreen: true,
-      fullscreenWeb: true,
-      miniProgressBar: true,
-      playsInline: true,
-      autoPlayback: true,
-      autoOrientation: true,
-      fastForward: true,
-      airplay: true,
-      theme: "#23ade5",
-      highlight: progressDot,
-      // thumbnails:{ // 无效
-      //   url:finalThumbUrl,
-      //   number:totalCount,
-      //   column:5,
-      //   height:90,
-      //   width:160
-      // }
-    });
-*/
   //=======================西瓜播放器==============================================
 
   // 播放器css
@@ -150,10 +85,13 @@ async function main() {
   }
 
   // 视频预览图
-  // const totalCount = maxNum * 25 + (await getThumbCount(thumbUrls.at(-1)));
-  // const blob = await concatenateImages(thumbUrls);
-  //   const uploadedUrls = await Promise.all(thumbUrls.map(uploadImage));
-  // const uploadedUrl = await uploadImage(blob);
+  let totalCount,uploadedUrl;
+  // if($('#hd-leftColVideoPage').length){ // 无效！
+  //   totalCount = maxNum * 25 + (await getThumbCount(thumbUrls.at(-1)));
+  //   const blob = await concatenateImages(thumbUrls);
+  //   uploadedUrl = await uploadImage(blob);
+  //   console.log(uploadedUrl);
+  // }
 
   const config = {
     id: "mse",
@@ -168,21 +106,24 @@ async function main() {
     fluid: true,
     volume: 0,
     progressDot: progressDot,
-    // thumbnail: {
-    //   // TODO: 预览图无效
-    //   pic_num: totalCount,
-    //   width: 160,
-    //   height: 90,
-    //   col: 5,
-    //   row: 5 * (maxNum + 1),
-    //   urls: [URL.createObjectURL(blob)],
-    // },
     closeVideoDblclick: false,
     closeVideoTouch: false,
     url: firstUrl,
   };
   config.plugins.push(HlsPlayer);
   config.hls.preloadTime = 10;
+
+
+  if(totalCount)
+    config.thumbnail={
+      pic_num: totalCount,
+      width: 160,
+      height: 90,
+      col: 5,
+      row: 5 * (maxNum + 1),
+      urls: [uploadedUrl],
+    };
+
   console.log(config);
   unsafeWindow.player = new Player(config);
 
@@ -200,17 +141,15 @@ async function main() {
   // ====================下载按钮=========================
 
   // 构建下载按钮html
-  const title = document.title;
+  const title = flashvars.video_title;
   const videoUrls = videoList
     .map(
-      (x) => `<a class="video-download" href="${x.videoUrl}"
+      (x) => `<a class="video-download" href="${x.videoUrl}" onclick="return false;"
                     download="${title}.mp4" >
                 ${x.quality}p
                 </a>`
     )
     .join("\n");
-
-  // onclick="downloadM3U8('${x.videoUrl}','${title}');return false;"
 
   const divHtml = `
     <div id="downloadUrls">
@@ -248,56 +187,6 @@ async function main() {
     }
 
     `);
-
-  /*
-  // 下载进度条css
-  GM_addStyle(GM_getResourceText('progressCss'));
-
-  // 下载m3u8视频的实现
-  unsafeWindow.downloadM3U8= function downloadM3U8(m3u8_link, name = "video") {
-    alert('开始下载：'+name);
-    // 使用AJAX请求获取m3u8文件的内容
-    fetch(m3u8_link)
-      .then((response) => response.text())
-      .then(async (data) => {
-        // 分析m3u8文件的内容，找到所有的TS文件链接
-        const ts_links = [];
-        const lines = data.split("\n");
-        lines.forEach((line) => {
-          if (line.includes("-v1-a1.ts")) {
-            ts_links.push(line);
-          }
-        });
-
-        // 使用Blob和URL.createObjectURL创建一个包含所有TS文件内容的MP4文件
-      NProgress.start(); // 显示下载进度
-      let count=0;
-      const total=ts_links.length;
-      const blobParts = await Promise.all(
-        ts_links.map((link) =>
-          fetch(new URL(link, m3u8_link))
-             .then((response) => response.blob())
-             .then(b=>{
-              NProgress.set((++count)/total);
-              return b;
-            })
-        )
-      );
-      NProgress.done();
-
-
-        const mp4_blob = new Blob(blobParts, { type: "video/mp4" });
-        const  mp4_url = URL.createObjectURL(mp4_blob);
-
-        // 将MP4文件的链接添加到<a>标签的href属性，以便下载
-        const anchor = document.createElement("a");
-        anchor.href = mp4_url;
-        anchor.download = name + ".mp4";
-        anchor.click();
-        URL.revokeObjectURL(mp4_url); // 撤回对blob对象的引用
-      });
-  };
-*/
 }
 
   // 获取最后一张图片的缩略图个数
@@ -396,30 +285,14 @@ async function main() {
   }
 
   // 上传图片到图床
-  async function uploadImage(urlOrBlob) {
-    if (urlOrBlob.constructor === String)
-      return fetch("https://zh-cn.imgbb.com/json", {
-        method: "POST",
-        body: new URLSearchParams({
-          source: url,
-          type: "url",
-          action: "upload",
-          // timestamp: Date.now(),
-          expiration: "P1D",
-        }),
-      })
-        .then((r) => r.json())
-        .then((j) => j.image.display_url);
-
-    const fd = new FormData();
-    fd.append("source", urlOrBlob);
-    fd.append("type", "file");
-    fd.append("action", "upload");
-    fd.append("expiration", "P1D");
-    return fetch("https://zh-cn.imgbb.com/json", {
-      method: "POST",
-      body: fd,
-    })
-      .then((r) => r.json())
-      .then((j) => j.image.display_url);
+  async function uploadImage(blob) {
+    const fd=new FormData();
+    fd.append('source',blob);
+    fd.append('type','file');
+    fd.append('action','upload');
+    fd.append('expiration','P1D');
+    return fetch('https://zh-cn.imgbb.com/json',{
+          method:'post',
+          body:fd,
+      }).then(r=>r.json()).then(j=>j.image.display_url);
   }
