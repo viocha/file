@@ -31,13 +31,15 @@
 // ==/UserScript==
 
 $(()=>{
-	$(document.body).prepend($('<button>测试下载</button>').on('click', ()=>{
-		// 测试下载
-		GM_download({
-			name:'test.jpg',
-			url:'https://ei.phncdn.com/videos/202501/05/462769881/timeline/120x90/(m=eyzaiCObaaaa)(mh=mJYTv2br_xJBGnNk)S5.jpg',
-		});
-	}));
+	$(document.body)
+			.prepend($(`<button style="z-index: 9999;position: fixed;">测试下载</button>`)
+					.on('click', ()=>{
+						// 测试下载
+						GM_download({
+							name:'test.jpg',
+							url:'https://ei.phncdn.com/videos/202501/05/462769881/timeline/120x90/(m=eyzaiCObaaaa)(mh=mJYTv2br_xJBGnNk)S5.jpg',
+						});
+					}));
 });
 
 // TODO ：电脑端原始的声音不能关闭
