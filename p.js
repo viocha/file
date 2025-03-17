@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.5
+// @version     1.6
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -78,6 +78,7 @@ async function main(){
 		fluid:true, // 启用后，不会超出屏幕大小
 		fullscreen:{
 			useScreenOrientation:true, // 移动端全屏时强制旋转成横屏
+			target:$('#xgplayer')[0], // 全屏时的目标元素
 		},
 		plugins:[HlsPlayer], // 插件列表，支持hls播放m3u8链接
 	};
