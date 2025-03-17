@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.14
+// @version     1.15
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -123,12 +123,12 @@ async function pornhubMain(){
     }
 	`);
 	
-	// 下载按钮
-	addDownloadButtons(flashvars, videoUrls, containerSelector);
-	// 重点标记快速跳转
-	addDotList(config.progressDot, player, containerSelector);
 	// 缩略图快速跳转
 	addFrameList(flashvars, player, containerSelector);
+	// 重点标记快速跳转
+	addDotList(config.progressDot, player, containerSelector);
+	// 下载按钮
+	addDownloadButtons(flashvars, videoUrls, containerSelector);
 }
 
 function addDotList(progressDot, player, containerSelector){
@@ -138,6 +138,7 @@ function addDotList(progressDot, player, containerSelector){
 				<div class="jump-list-tile">快速跳转列表：</div>
 		</div>
 	`);
+	$(containerSelector).append($jumpList);
 	
 	for (const {text, time} of progressDot){
 		$jumpList.append(`
@@ -153,7 +154,6 @@ function addDotList(progressDot, player, containerSelector){
 		const time = $(this).data('time');
 		player.seek(time);
 	});
-	$(containerSelector).append($jumpList);
 	
 	// language=css
 	GM_addStyle(`
@@ -187,31 +187,12 @@ function addDotList(progressDot, player, containerSelector){
 	`);
 }
 
-function addFrameList(flashvars, player, containerSelector){
-	// 获取缩略图的数据
+async function addFrameList(flashvars, player, containerSelector){
+	// 获取截图时间列表
 	const duration = flashvars.video_duration;
-	const {samplingFrequency, thumbHeight, thumbWidth, urlPattern} = flashvars.thumbs;
-	// 图组的链接
-	const thumbUrls = []; // 网格图的链接，最后一张可能不完整
-	const frameCnt = Math.floor(duration/samplingFrequency); // 采样的总帧数
-	const groupCnt = +urlPattern.match(/{(\d+)}/)[1];
-	for (let i = 0; i<=groupCnt; i++){
-		thumbUrls.push(urlPattern.replace(/{\d+}/, i)); // 每一个url最多5x5张截图
-	}
-	
-	const frames = [];
-	const size = Math.min(frameCnt, 10);
-	const step = Math.floor(frameCnt/size);
-	for (let i = 0; i<size*step; i += step){
-		const [g, x, y] = getIdx(i);
-		const url = thumbUrls[g];
-		const time = i*samplingFrequency;
-		frames.push({
-			time:time,
-			text:formatTime(time),
-			url, x:x*thumbWidth, y:y*thumbHeight, w:+thumbWidth, h:+thumbHeight,
-		});
-	}
+	const size = Math.min(duration, 10);
+	const step = Math.floor(duration/size);
+	const timeList = Array.from({length:size}, (_, i)=>i*step);
 	
 	// 添加到页面
 	const $frameListWrapper = $(`
@@ -220,95 +201,68 @@ function addFrameList(flashvars, player, containerSelector){
 			<div id="frame-list"></div>
 		</div>
 	`);
+	$(containerSelector).append($frameListWrapper);
+	
 	const $list = $frameListWrapper.find('#frame-list');
-	// 遍历数据，动态生成列表项
-	frames.forEach(function(frame){
+	// 依次截图，动态生成列表项
+	for await (const [time, dataUrl] of captureScreenshots(player.url, timeList)){
 		// 列表项
 		const $item = $('<div class="frame-item"></div>');
-		
 		// 缩略图
-		const $img = $(`<img data-time="${frame.time}" class="frame-img" >`);
+		const $img = $(`<img data-time="${time}" class="frame-img" src="${dataUrl}">`);
 		$img.on('click', function(){
-			player.seek(frame.time);
+			player.seek(time);
 		});
-		clipImage(frame.url, frame.x, frame.y, frame.w, frame.h).then((dataUrl)=>{
-			$img.attr('src', dataUrl);
-		});
-		
 		// 标注文本
-		const $text = $(`<div class="frame-text">${frame.text}</div>`);
-		
-		// 组装列表项
+		const $text = $(`<div class="frame-text">${formatTime(time)}</div>`);
 		$item.append($img, $text);
 		$list.append($item);
-		$(containerSelector).append($frameListWrapper);
-		
-		// language=css
-		GM_addStyle(`
-      /* 横向滚动列表 */
-      #frame-list {
-        display        : flex;
-        overflow-x     : auto;
-        padding-bottom : 10px;
-      }
-
-      /* 每个列表项 */
-      .frame-item {
-        flex          : 0 0 auto;
-        margin-right  : 15px;
-        border-radius : 5px;
-        box-shadow    : 0 2px 5px rgba(0, 0, 0, 0.1);
-        cursor        : pointer;
-      }
-
-      /* 缩略图 */
-      .frame-img {
-        width  : min(50vw, 200px); /* 固定宽度 */
-        height : auto; /* 高度自适应 */
-      }
-
-      /* 文字标注 */
-      .frame-text {
-        width         : 100%;
-        border-radius : 0 0 0.2em 0.2em;
-        text-align    : center;
-        font-size     : 14px;
-        background    : #484848bd;
-        color         : #c76fff;
-      }
-		`);
-	});
-	
-	// 返回 OffsetGroup,OffsetX,OffsetY
-	function getIdx(k){ // k为第几个截图，从0开始
-		const g = Math.floor(k/25);
-		k -= g*25;
-		const x = k%5;
-		const y = Math.floor(k/5);
-		return [g, x, y];
 	}
 	
-	// 使用canvas裁剪图片，返回url
-	async function clipImage(url, x, y, w, h){
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d');
-		const img = new Image();
-		img.crossOrigin = 'anonymous'; // 解决跨域问题，防止toDataURL报错
-		return new Promise(resolve=>{
-			img.onload = function(){
-				canvas.width = w;
-				canvas.height = h;
-				ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
-				resolve(canvas.toDataURL());
-			};
-			img.src = url;
-		});
-	}
+	// language=css
+	GM_addStyle(`
+    /* 横向滚动列表 */
+    #frame-list {
+      display        : flex;
+      overflow-x     : auto;
+      padding-bottom : 10px;
+    }
+
+    /* 每个列表项 */
+    .frame-item {
+      flex          : 0 0 auto;
+      margin-right  : 15px;
+      border-radius : 5px;
+      box-shadow    : 0 2px 5px rgba(0, 0, 0, 0.1);
+      cursor        : pointer;
+    }
+
+    /* 缩略图 */
+    .frame-img {
+      width  : min(50vw, 200px); /* 固定宽度 */
+      height : auto; /* 高度自适应 */
+    }
+
+    /* 文字标注 */
+    .frame-text {
+      width         : 100%;
+      border-radius : 0 0 0.2em 0.2em;
+      text-align    : center;
+      font-size     : 14px;
+      background    : #484848bd;
+      color         : #c76fff;
+    }
+	`);
 }
 
 function addDownloadButtons(flashvars, videoUrls, containerSelector){
-	// 构建下载按钮html
 	const title = flashvars.video_title;
+	const $buttonContainer = $(`
+    <div id="downloadUrls">
+      下载链接：
+    </div>`);
+	$(containerSelector).append($buttonContainer);
+	
 	// 所有画质的下载链接
 	const links = videoUrls
 			.map(
@@ -320,19 +274,14 @@ function addDownloadButtons(flashvars, videoUrls, containerSelector){
               </a>`,
 			)
 			.join('\n');
+	$buttonContainer.append(links);
 	
-	const $buttonContainer = $(`
-    <div id="downloadUrls">
-      下载链接：${links}
-      <button id="titleCopy">复制标题</button>
-    </div>`);
 	
 	// 复制标题按钮
-	$buttonContainer.find('#titleCopy').on('click', ()=>{
+	const $copyButton=$(`<button id="titleCopy">复制标题</button>`).on('click', ()=>{
 		navigator.clipboard.writeText(title);
 	});
-	
-	$(containerSelector).append($buttonContainer);
+	$buttonContainer.append($copyButton);
 	
 	// 下载按钮样式
 	// language=css
@@ -348,13 +297,28 @@ function addDownloadButtons(flashvars, videoUrls, containerSelector){
       color            : rgb(255, 144, 0);
     }
 	`);
-	
 }
 
-function formatTime(time){
-	const minutes = Math.floor(time/60).toString().padStart(2, '0');
-	const seconds = (time%60).toString().padStart(2, '0');
-	return `${minutes}:${seconds}`;
+async function* captureScreenshots(videoUrl, timeList){
+	const player = new Player({
+		el:$('<div></div>')[0],
+		url:videoUrl,
+		plugins:[HlsPlayer],
+	});
+	
+	for (const time of timeList){
+		player.seek(time);
+		if (!player.isCanPlay){
+			await new Promise((resolve, reject)=>{
+				player.on(Player.Events.CANPLAY, resolve);
+				setTimeout(reject, 5000, '视频加载超时');
+			});
+		}
+		const imgDataUrl = await player.getPlugin('screenShot')
+																	 .shot(player.video.videoWidth, player.video.videoHeight,
+																			 {quality:1, type:'image/jpg'});
+		yield [time, imgDataUrl];
+	}
 }
 
 function getProgressDot(flashvars){
@@ -376,6 +340,12 @@ function getVideoUrls(flashvars){
 					url:x.videoUrl.replace('master.m3u8', 'index-v1-a1.m3u8'),
 				};
 			});
+}
+
+function formatTime(time){
+	const minutes = Math.floor(time/60).toString().padStart(2, '0');
+	const seconds = (time%60).toString().padStart(2, '0');
+	return `${minutes}:${seconds}`;
 }
 
 $(main);
