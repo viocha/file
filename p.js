@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.8
+// @version     1.9
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -54,9 +54,6 @@ async function main(){
 	const videoList = flashvars.mediaDefinitions
 														 .filter(x=>x.quality.constructor===String && parseInt(x.quality))
 														 .sort((x, y)=>Number(y.quality)-Number(x.quality)); // 按画质排序
-	for (const x of videoList){ // 避免一次请求
-		x.videoUrl = x.videoUrl.replace('master.m3u8', 'index-v1-a1.m3u8');
-	}
 	// 最高画质的视频链接
 	const firstUrl = videoList[0].videoUrl;
 	
@@ -85,7 +82,8 @@ async function main(){
 																.map((x)=>x.split(':'))
 																.map((x)=>({text:x[0], time:+x[1]}));
 	
-	unsafeWindow.player = new Player(config);
+	const player = new Player(config);
+	unsafeWindow.player = player;
 	
 	// =====================自动横屏=============================
 	const $controls = $('#mse > xg-controls');
@@ -104,11 +102,13 @@ async function main(){
 	const urlPattern = flashvars.thumbs.urlPattern;
 	const maxNum = +urlPattern.match(/{(\d+)}/)[1];
 	const thumbUrls = [];
+	// 截图拼接而成的网格图，每一张包含5x5张截图，最后一张可能不完整
+	// 采样率为9秒一张
 	for (let i = 0; i<=maxNum; i++){
 		thumbUrls.push(urlPattern.replace(/{\d+}/, i));
 	}
 	
-	// 视频预览图
+	// 拼接成一张视频预览图，然后上传到图床，获取url
 	let totalCount, uploadedUrl;
 	// if($('#hd-leftColVideoPage').length){ // 无效！
 	//   totalCount = maxNum * 25 + (await getThumbCount(thumbUrls.at(-1)));
@@ -119,6 +119,45 @@ async function main(){
 	// ====================缩略图快速跳转=================== TODO
 	
 	// ===================重点标记快速跳转=================== TODO
+	// 创建一个列表，列表的wrapper的最大高度10em限制，允许滚动，每个列表项点击之后能够跳转到对应的视频时间点，点击有动画效果
+	const $jumpList = $(`<div id="jumpList">
+		<div class="jump-list-tile">快速跳转列表：</div>
+	</div>`);
+	for (const {text, time} of config.progressDot){
+		$jumpList.append(`<div class="jumpItem" data-time="${time}">${text}</div>`);
+	}
+	$('.video-actions-menu, .underThumbButtons').after($jumpList);
+	// language=css
+	GM_addStyle(`
+		#jumpList {
+			max-height: 10em;
+			overflow: auto;
+      font-weight: bold;
+      color: lightgreen;
+      padding: 0.1em 0.5em;
+      border: 1px solid dimgray;
+      border-radius: 0.3em;
+      margin: 0 0.2em;
+    }
+    #jumpList>.jump-list-tile {
+			font-weight: bold;
+			color: lightgreen;
+		}
+		.jumpItem {
+				padding: 0.2em 0.5em;
+				margin: 0.1em 0.3em;
+				border: 1px solid #ff9000;
+				border-radius: 0.3em;
+				cursor: pointer;
+				background-color: transparent;
+				color: #ff9000;
+		}
+	`);
+	// 点击事件
+	$jumpList.on('click', '.jumpItem', function(){
+		const time = $(this).data('time');
+		player.seek(time);
+	});
 	
 	// ====================下载按钮=========================
 	
@@ -147,6 +186,7 @@ async function main(){
 	$('.video-actions-menu, .underThumbButtons').after($buttons); // 电脑和手机选择器不一样
 	
 	// 下载按钮样式
+	// language=css
 	GM_addStyle(`
     #downloadUrls {
         font-weight: bold;
