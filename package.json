@@ -1,0 +1,15 @@
+{
+  "name": "files",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "test": "echo 123",
+    "push":"node-run ./build/push.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/viocha/files.git"
+  },
+  "private": true
+}

@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.1
+// @version     1.2
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -80,6 +80,7 @@ async function main(){
 		autoplay:true, // 自动开始播放
 		volume:0, // 开始时静音
 		closeVideoDblclick:false, // 启动双击暂停
+		plugins:[], // 插件列表
 	};
 	config.plugins.push(HlsPlayer); // 启用hls插件
 	config.hls.preloadTime = 10;
