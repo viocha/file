@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.2
+// @version     1.3
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -72,18 +72,15 @@ async function main(){
 	const config = {
 		id:'mse',
 		url:firstUrl,
-		miniprogress:true, // TODO: miniprogress无效
+		autoplay:true, // 自动开始播放
+		volume:0, // 开始时静音
 		playbackRate:false, // 禁用速度设置
+		closeVideoDblclick:false, // 启动双击暂停
 		fullscreen:{
 			rotateFullscreen:true, // 移动端全屏时强制横屏
 		},
-		autoplay:true, // 自动开始播放
-		volume:0, // 开始时静音
-		closeVideoDblclick:false, // 启动双击暂停
-		plugins:[], // 插件列表
+		plugins:[HlsPlayer], // 插件列表，支持hls播放m3u8链接
 	};
-	config.plugins.push(HlsPlayer); // 启用hls插件
-	config.hls.preloadTime = 10;
 	
 	// 视频重点标记
 	config.progressDot = flashvars.actionTags
