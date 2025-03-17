@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.17
+// @version     1.18
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -307,6 +307,9 @@ async function* captureScreenshots(videoUrl, timeList){
 		el:$('<div></div>')[0],
 		url:videoUrl,
 		plugins:[HlsPlayer],
+		hls:{
+			preloadTime:1, // 预加载1秒
+		},
 	});
 	player.seek(0); // 启动数据加载
 	await new Promise((resolve, reject)=>{
