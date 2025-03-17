@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.10
+// @version     1.11
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -30,13 +30,15 @@
 // @grant GM_download
 // ==/UserScript==
 
-// 测试下载
-setTimeout(()=>{
-	GM_download({
-		name:'test.jpg',
-		url:'https://ei.phncdn.com/videos/202501/05/462769881/timeline/120x90/(m=eyzaiCObaaaa)(mh=mJYTv2br_xJBGnNk)S5.jpg',
-	});
-}, 2000);
+$(()=>{
+	$(document.body).prepend($('<button>测试下载</button>').on('click', ()=>{
+		// 测试下载
+		GM_download({
+			name:'test.jpg',
+			url:'https://ei.phncdn.com/videos/202501/05/462769881/timeline/120x90/(m=eyzaiCObaaaa)(mh=mJYTv2br_xJBGnNk)S5.jpg',
+		});
+	}));
+});
 
 // TODO ：电脑端原始的声音不能关闭
 
