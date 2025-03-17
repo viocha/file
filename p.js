@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.7
+// @version     1.8
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -50,7 +50,7 @@ $(main);
 async function main(){
 	// 获取视频链接并按画质排序
 	const idNum = MGP.getPlayerIds()[0].split('_')[1];
-	const flashvars = window[`flashvars_${idNum}`];
+	const flashvars = unsafeWindow[`flashvars_${idNum}`]; // 必须使用unsafeWindow才能访问到
 	const videoList = flashvars.mediaDefinitions
 														 .filter(x=>x.quality.constructor===String && parseInt(x.quality))
 														 .sort((x, y)=>Number(y.quality)-Number(x.quality)); // 按画质排序
