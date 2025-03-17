@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.13
+// @version     1.14
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -209,7 +209,7 @@ function addFrameList(flashvars, player, containerSelector){
 		frames.push({
 			time:time,
 			text:formatTime(time),
-			url, x, y, w:+thumbWidth, h:+thumbHeight,
+			url, x:x*thumbWidth, y:y*thumbHeight, w:+thumbWidth, h:+thumbHeight,
 		});
 	}
 	
@@ -231,7 +231,6 @@ function addFrameList(flashvars, player, containerSelector){
 		$img.on('click', function(){
 			player.seek(frame.time);
 		});
-		console.log(frame.url, frame.x, frame.y, frame.w, frame.h);
 		clipImage(frame.url, frame.x, frame.y, frame.w, frame.h).then((dataUrl)=>{
 			$img.attr('src', dataUrl);
 		});
