@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.6
+// @version     1.7
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -50,7 +50,7 @@ $(main);
 async function main(){
 	// 获取视频链接并按画质排序
 	const idNum = MGP.getPlayerIds()[0].split('_')[1];
-	const flashvars = unsafeWindow[`flashvars_${idNum}`];
+	const flashvars = window[`flashvars_${idNum}`];
 	const videoList = flashvars.mediaDefinitions
 														 .filter(x=>x.quality.constructor===String && parseInt(x.quality))
 														 .sort((x, y)=>Number(y.quality)-Number(x.quality)); // 按画质排序
@@ -76,10 +76,6 @@ async function main(){
 		playbackRate:false, // 禁用速度设置
 		miniprogress:true, // 当控制栏隐藏时，显示底部的小进度条
 		fluid:true, // 启用后，不会超出屏幕大小
-		fullscreen:{
-			useScreenOrientation:true, // 移动端全屏时强制旋转成横屏
-			target:$('#xgplayer')[0], // 全屏时的目标元素
-		},
 		plugins:[HlsPlayer], // 插件列表，支持hls播放m3u8链接
 	};
 	
@@ -92,15 +88,15 @@ async function main(){
 	unsafeWindow.player = new Player(config);
 	
 	// =====================自动横屏=============================
-	// const $controls = $('#mse > xg-controls');
-	// document.addEventListener('fullscreenchange', ()=>{
-	// 	if (document.fullscreenElement!==null){ // 处于全屏状态
-	// 		screen.orientation.lock('landscape'); // 强制横屏
-	// 		$controls.css('position', 'fixed');
-	// 	} else {
-	// 		$controls.css('position', 'absolute');
-	// 	}
-	// });
+	const $controls = $('#mse > xg-controls');
+	document.addEventListener('fullscreenchange', ()=>{
+		if (document.fullscreenElement!==null){ // 处于全屏状态
+			screen.orientation.lock('landscape'); // 强制横屏
+			$controls.css('position', 'fixed');   // 解决控制栏默认会偏移
+		} else {
+			$controls.css('position', 'absolute');
+		}
+	});
 	
 	// =======================缩略图设置=============================
 	
@@ -120,6 +116,9 @@ async function main(){
 	//   uploadedUrl = await uploadImage(blob);
 	//   console.log(uploadedUrl);
 	// }
+	// ====================缩略图快速跳转=================== TODO
+	
+	// ===================重点标记快速跳转=================== TODO
 	
 	// ====================下载按钮=========================
 	
