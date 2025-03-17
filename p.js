@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.15
+// @version     1.16
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -195,6 +195,7 @@ async function addFrameList(flashvars, player, containerSelector){
 	const timeList = Array.from({length:size}, (_, i)=>i*step);
 	
 	// 添加到页面
+	addCss();
 	const $frameListWrapper = $(`
 		<div id="frame-list-wrapper">
 			画面快速跳转：
@@ -219,40 +220,42 @@ async function addFrameList(flashvars, player, containerSelector){
 		$list.append($item);
 	}
 	
-	// language=css
-	GM_addStyle(`
-    /* 横向滚动列表 */
-    #frame-list {
-      display        : flex;
-      overflow-x     : auto;
-      padding-bottom : 10px;
-    }
+	function addCss(){
+		// language=css
+		GM_addStyle(`
+      /* 横向滚动列表 */
+      #frame-list {
+        display        : flex;
+        overflow-x     : auto;
+        padding-bottom : 10px;
+      }
 
-    /* 每个列表项 */
-    .frame-item {
-      flex          : 0 0 auto;
-      margin-right  : 15px;
-      border-radius : 5px;
-      box-shadow    : 0 2px 5px rgba(0, 0, 0, 0.1);
-      cursor        : pointer;
-    }
+      /* 每个列表项 */
+      .frame-item {
+        flex          : 0 0 auto;
+        margin-right  : 15px;
+        border-radius : 5px;
+        box-shadow    : 0 2px 5px rgba(0, 0, 0, 0.1);
+        cursor        : pointer;
+      }
 
-    /* 缩略图 */
-    .frame-img {
-      width  : min(50vw, 200px); /* 固定宽度 */
-      height : auto; /* 高度自适应 */
-    }
+      /* 缩略图 */
+      .frame-img {
+        width  : min(50vw, 200px); /* 固定宽度 */
+        height : auto; /* 高度自适应 */
+      }
 
-    /* 文字标注 */
-    .frame-text {
-      width         : 100%;
-      border-radius : 0 0 0.2em 0.2em;
-      text-align    : center;
-      font-size     : 14px;
-      background    : #484848bd;
-      color         : #c76fff;
-    }
-	`);
+      /* 文字标注 */
+      .frame-text {
+        width         : 100%;
+        border-radius : 0 0 0.2em 0.2em;
+        text-align    : center;
+        font-size     : 14px;
+        background    : #484848bd;
+        color         : #c76fff;
+      }
+		`);
+	}
 }
 
 function addDownloadButtons(flashvars, videoUrls, containerSelector){
@@ -276,9 +279,8 @@ function addDownloadButtons(flashvars, videoUrls, containerSelector){
 			.join('\n');
 	$buttonContainer.append(links);
 	
-	
 	// 复制标题按钮
-	const $copyButton=$(`<button id="titleCopy">复制标题</button>`).on('click', ()=>{
+	const $copyButton = $(`<button id="titleCopy">复制标题</button>`).on('click', ()=>{
 		navigator.clipboard.writeText(title);
 	});
 	$buttonContainer.append($copyButton);
@@ -311,7 +313,7 @@ async function* captureScreenshots(videoUrl, timeList){
 		if (!player.isCanPlay){
 			await new Promise((resolve, reject)=>{
 				player.on(Player.Events.CANPLAY, resolve);
-				setTimeout(reject, 5000, '视频加载超时');
+				setTimeout(reject, 10000, '视频加载超时');
 			});
 		}
 		const imgDataUrl = await player.getPlugin('screenShot')
