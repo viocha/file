@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.9
+// @version     1.10
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -29,6 +29,14 @@
 // @grant GM_xmlhttpRequest
 // @grant GM_download
 // ==/UserScript==
+
+// 测试下载
+setTimeout(()=>{
+	GM_download({
+		name:'test.jpg',
+		url:'https://ei.phncdn.com/videos/202501/05/462769881/timeline/120x90/(m=eyzaiCObaaaa)(mh=mJYTv2br_xJBGnNk)S5.jpg',
+	});
+}, 2000);
 
 // TODO ：电脑端原始的声音不能关闭
 
@@ -124,34 +132,46 @@ async function main(){
 		<div class="jump-list-tile">快速跳转列表：</div>
 	</div>`);
 	for (const {text, time} of config.progressDot){
-		$jumpList.append(`<div class="jumpItem" data-time="${time}">${text}</div>`);
+		// 用0填充直到两位数
+		const minutes = Math.floor(time/60).toString().padStart(2, '0');
+		const seconds = (time%60).toString().padStart(2, '0');
+		$jumpList.append(`<div class="jumpItem" data-time="${time}">
+					<span class="time-label">${minutes}:${seconds} </span>
+					${text}
+				</div>`);
 	}
 	$('.video-actions-menu, .underThumbButtons').after($jumpList);
 	// language=css
 	GM_addStyle(`
-		#jumpList {
-			max-height: 10em;
-			overflow: auto;
-      font-weight: bold;
-      color: lightgreen;
-      padding: 0.1em 0.5em;
-      border: 1px solid dimgray;
-      border-radius: 0.3em;
-      margin: 0 0.2em;
+    #jumpList {
+      max-height    : 10em;
+      overflow      : auto;
+      font-weight   : bold;
+      color         : lightgreen;
+      padding       : 0.1em 0.5em;
+      border        : 1px solid dimgray;
+      border-radius : 0.3em;
+      margin        : 0 0.2em;
     }
-    #jumpList>.jump-list-tile {
-			font-weight: bold;
-			color: lightgreen;
-		}
-		.jumpItem {
-				padding: 0.2em 0.5em;
-				margin: 0.1em 0.3em;
-				border: 1px solid #ff9000;
-				border-radius: 0.3em;
-				cursor: pointer;
-				background-color: transparent;
-				color: #ff9000;
-		}
+
+    #jumpList > .jump-list-tile {
+      font-weight : bold;
+      color       : lightgreen;
+    }
+
+    .jumpItem {
+      padding          : 0.2em 0.5em;
+      margin           : 0.1em 0.3em;
+      border           : 1px solid #ff9000;
+      border-radius    : 0.3em;
+      cursor           : pointer;
+      background-color : transparent;
+      color            : #ff9000;
+    }
+
+    .jumpItem .time-label {
+      margin-right : 1em;
+    }
 	`);
 	// 点击事件
 	$jumpList.on('click', '.jumpItem', function(){
@@ -189,26 +209,26 @@ async function main(){
 	// language=css
 	GM_addStyle(`
     #downloadUrls {
-        font-weight: bold;
-        color: lightgreen;
-        padding: 0.1em 0.5em;
-        border: 1px solid dimgray;
-        border-radius: 0.3em;
-        margin: 0 0.2em;
+      font-weight   : bold;
+      color         : lightgreen;
+      padding       : 0.1em 0.5em;
+      border        : 1px solid dimgray;
+      border-radius : 0.3em;
+      margin        : 0 0.2em;
     }
 
-    div#downloadUrls> :is(a,button) {
-        border: 1px solid rgb(255, 144, 0);
-        border-radius: 0.3em;
-        padding: 0.1em 0.4em;
-        margin: 0.1em 0.3em;
-        min-width: 3em;
-        text-align: center;
-        background-color: transparent;
-        color: rgb(255, 144, 0);
+    div#downloadUrls > :is(a,button) {
+      border           : 1px solid rgb(255, 144, 0);
+      border-radius    : 0.3em;
+      padding          : 0.1em 0.4em;
+      margin           : 0.1em 0.3em;
+      min-width        : 3em;
+      text-align       : center;
+      background-color : transparent;
+      color            : rgb(255, 144, 0);
     }
-
-    `);
+	
+	`);
 	
 }
 
