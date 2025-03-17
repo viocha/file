@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.16
+// @version     1.17
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -190,9 +190,10 @@ function addDotList(progressDot, player, containerSelector){
 async function addFrameList(flashvars, player, containerSelector){
 	// 获取截图时间列表
 	const duration = flashvars.video_duration;
-	const size = Math.min(duration, 10);
-	const step = Math.floor(duration/size);
-	const timeList = Array.from({length:size}, (_, i)=>i*step);
+	const skip = 5; // 跳过开头的时间
+	const size = Math.min(duration-skip, 10);
+	const step = Math.floor((duration-skip)/size);
+	const timeList = Array.from({length:size}, (_, i)=>skip+i*step);
 	
 	// 添加到页面
 	addCss();
@@ -307,7 +308,11 @@ async function* captureScreenshots(videoUrl, timeList){
 		url:videoUrl,
 		plugins:[HlsPlayer],
 	});
-	
+	player.seek(0); // 启动数据加载
+	await new Promise((resolve, reject)=>{
+		player.on(Player.Events.CANPLAY, resolve);
+		setTimeout(reject, 10000, '视频加载超时');
+	});
 	for (const time of timeList){
 		player.seek(time);
 		if (!player.isCanPlay){
