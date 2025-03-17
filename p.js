@@ -8,7 +8,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.3
+// @version     1.4
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -75,7 +75,9 @@ async function main(){
 		autoplay:true, // 自动开始播放
 		volume:0, // 开始时静音
 		playbackRate:false, // 禁用速度设置
+		miniprogress:true, // 当控制栏隐藏时，显示底部的小进度条
 		closeVideoDblclick:false, // 启动双击暂停
+		fluid:true, // 启用后，不会超出屏幕大小
 		fullscreen:{
 			rotateFullscreen:true, // 移动端全屏时强制横屏
 		},
