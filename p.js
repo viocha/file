@@ -8,8 +8,9 @@
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
+// @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.4
+// @version     2.5
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -30,6 +31,8 @@
 // @grant GM_xmlhttpRequest
 // @grant GM_download
 // ==/UserScript==
+
+// TODO：验证seek会不会自动播放
 
 const sites = [
 	{
@@ -132,14 +135,14 @@ function xhamster(wrapper, controls){
 		const playerUrl = videoUrls[0].url;
 		
 		// 添加播放器
-		const player = addPlayer(wrapper, playerUrl);
+		const player = addPlayer(wrapper, playerUrl, {hls:false});
 		
 		// ===================用于添加自定义功能的区域===============
 		const controlContainer = createControlContainer();
 		$(controls).after(controlContainer);
 		
 		// 缩略图快速跳转
-		addFrameList(controlContainer, player, duration);
+		addFrameList(controlContainer, player, duration, false);
 		// 下载按钮
 		addDownloadButtons(controlContainer, videoUrls, title);
 	});
@@ -160,7 +163,9 @@ function xhamster(wrapper, controls){
 
 // =================各网站通用函数=====================
 
+// 默认弃用hls，播放mp4时需要禁用
 function addPlayer(playerWrapper, playerUrl, options = {}){
+	const {progressDot, hls = true} = options;
 	// 播放器html
 	$(playerWrapper).empty().append(`
 		 <div id="xg-player"></div>
@@ -168,7 +173,6 @@ function addPlayer(playerWrapper, playerUrl, options = {}){
 	// 播放器css
 	GM_addStyle(GM_getResourceText('playerCss'));
 	
-	const {progressDot} = options;
 	// 播放器配置
 	const config = {
 		id:'xg-player',
@@ -184,9 +188,14 @@ function addPlayer(playerWrapper, playerUrl, options = {}){
 			gestureY:false, // 禁用手势调节亮度音量
 			disableActive:false, // 禁用中间的时间预览
 		},
-		plugins:[HlsPlayer], // 插件列表，支持hls播放m3u8链接
+		plugins:[],  // 插件列表
 		progressDot, // 视频重点标记
 	};
+	if (hls){
+		config.plugins.push(HlsPlayer); // 播放m3u8链接
+	} else {
+		config.plugins.push(Mp4Plugin); // 播放mp4链接
+	}
 	const player = new Player(config);
 	unsafeWindow.player = player; // 用于调试
 	
@@ -276,7 +285,7 @@ function addDotList(containerSelector, player, progressDot){
 	`);
 }
 
-async function addFrameList(containerSelector, player, duration){
+async function addFrameList(containerSelector, player, duration, hls = true){
 	// 获取截图时间列表
 	const skip = 5; // 跳过开头的时间
 	const size = Math.min(duration-skip, 10);
@@ -295,7 +304,7 @@ async function addFrameList(containerSelector, player, duration){
 	
 	const $list = $frameListWrapper.find('#frame-list');
 	// 依次截图，动态生成列表项
-	for await (const [time, dataUrl] of captureScreenshots(player.url, timeList)){
+	for await (const [time, dataUrl] of captureScreenshots(player.url, timeList, hls)){
 		// 列表项
 		const $item = $('<div class="frame-item"></div>');
 		// 缩略图
@@ -389,15 +398,29 @@ function addDownloadButtons(containerSelector, videoUrls, title){
 	`);
 }
 
-async function* captureScreenshots(videoUrl, timeList){
-	const player = new Player({
+async function* captureScreenshots(videoUrl, timeList, hls){
+	const config = {
 		el:$('<div></div>')[0],
 		url:videoUrl,
-		plugins:[HlsPlayer],
-		hls:{
-			preloadTime:1, // 预加载1秒
-		},
-	});
+		seekedStatus:'pause', // seek操作之后暂停
+	};
+	if (hls){
+		Object.assign(config, {
+			plugins:[HlsPlayer],
+			hls:{
+				preloadTime:1, // 预加载1秒
+			},
+		});
+	} else {
+		Object.assign(config, {
+			plugins:[Mp4Plugin],
+			mp4plugin:{
+				maxBufferLength:1,
+				minBufferLength:1,
+			},
+		});
+	}
+	const player = new Player(config);
 	player.seek(0); // 启动数据加载
 	await new Promise((resolve, reject)=>{
 		player.on(Player.Events.CANPLAY, resolve);
