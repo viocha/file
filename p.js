@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.12
+// @version     2.13
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -439,6 +439,7 @@ function addDownloadButtons(containerSelector, videoUrls, title){
       display          : inline-block;
       font-weight      : bold;
       font-size        : 14px;
+      line-height      : 1.5;
       border           : 1px solid rgb(255, 144, 0);
       border-radius    : 0.3em;
       padding          : 0.1em 0.4em;
