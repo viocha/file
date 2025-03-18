@@ -4,13 +4,14 @@
 // @match       https://*.pornhub.com/view_video.php*
 // @match       https://*.pornhub.com/interstitial*
 // @match       https://*.xhamster.com/videos*
+// @match       https://www.xvideos.com/*
 // @require     https://cdn.jsdelivr.net/npm/jquery@3
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.9
+// @version     2.10
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -46,6 +47,12 @@ const sites = [
 		handler:xhamster,
 		wrapper:'#video_box',
 		controls:'[data-role="video-controls"]',
+	},
+	{
+		key:'xvideos',
+		handler:xvideos,
+		wrapper:'#content',
+		controls:'#v-actions-container',
 	},
 ];
 
@@ -124,6 +131,13 @@ function pornhub(wrapper, controls){
 }
 
 function xhamster(wrapper, controls){
+	// language=css
+	GM_addStyle(`
+    /* 去除顶部广告禁用警告 */
+    [data-role="promo-messages-wrapper"] {
+      display : none !important;
+    }
+	`);
 	$(()=>{
 		const data = unsafeWindow.initials;
 		// 视频时长和标题
@@ -143,6 +157,44 @@ function xhamster(wrapper, controls){
 		
 		// 缩略图快速跳转
 		addFrameList(controlContainer, player, duration, false);
+		// 下载按钮
+		addDownloadButtons(controlContainer, videoUrls, title);
+	});
+	
+	function getVideoUrls(data){
+		return data
+				.xplayerSettings.sources.standard.h264
+				.filter(x=>parseInt(x.quality))
+				.sort((x, y)=>parseInt(y.quality)-parseInt(x.quality)) // 按画质排序
+				.map(x=>{
+					return {
+						quality:x.quality,
+						url:x.url,
+					};
+				});
+	}
+}
+
+function xvideos(wrapper, controls){
+	$(async()=>{
+		const data = unsafeWindow.html5player;
+		// 视频时长和标题
+		const title = data.video_title;
+		const duration = +$('meta[property="og:duration"]').attr('content');
+		// 所有画质的视频链接
+		const videoUrls = await parseM3U8(data.url_hls);
+		// 最高画质的视频链接
+		const playerUrl = videoUrls[0].url;
+		
+		// 添加播放器
+		const player = addPlayer(wrapper, playerUrl);
+		
+		// ===================用于添加自定义功能的区域===============
+		const controlContainer = createControlContainer();
+		$(controls).after(controlContainer);
+		
+		// 缩略图快速跳转
+		addFrameList(controlContainer, player, duration);
 		// 下载按钮
 		addDownloadButtons(controlContainer, videoUrls, title);
 	});
@@ -261,11 +313,6 @@ function addDotList(containerSelector, player, progressDot){
     #jumpList {
       max-height : 10em;
       overflow   : auto;
-    }
-
-    #jumpList > .jump-list-tile {
-      font-weight : bold;
-      color       : lightgreen;
     }
 
     .jumpItem {
@@ -399,6 +446,7 @@ function addDownloadButtons(containerSelector, videoUrls, title){
       text-align       : center;
       background-color : transparent;
       color            : rgb(255, 144, 0);
+      text-decoration  : none;
     }
 	`);
 }
@@ -444,6 +492,28 @@ async function* captureScreenshots(videoUrl, timeList, hls){
 																			 {quality:1, type:'image/jpg'});
 		yield [time, imgDataUrl];
 	}
+}
+
+// 从m3u8入口解析出所有分辨率的m3u8链接
+async function parseM3U8(url){
+	// 获取 m3u8 文件内容
+	const text = await fetch(url).then(r=>r.text());
+	// 按行分割内容
+	const lines = text.split('\n');
+	
+	const result = [];
+	let quality = ''; // 用于存储当前分辨率
+	for (const line of lines){
+		if (line.startsWith('#EXT-X-STREAM-INF')){ // 匹配分辨率
+			const match = line.match(/NAME="(.+)"/);
+			quality = match[1];
+		} else if (line.endsWith('.m3u8')){ // 解析子 m3u8 链接
+			const absoluteUrl = new URL(line, url).href; // 处理相对路径
+			result.push({quality, url:absoluteUrl});
+		}
+	}
+	// 按画质排序
+	return result.sort((x, y)=>parseInt(y.quality)-parseInt(x.quality));
 }
 
 function formatTime(time){
