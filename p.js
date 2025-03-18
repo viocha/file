@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        ph工具
+// @name        x tool
 // @namespace   Violentmonkey Scripts
 // @match       https://*.pornhub.com/view_video.php*
 // @match       https://*.pornhub.com/interstitial*
@@ -9,7 +9,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.1
+// @version     2.2
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
