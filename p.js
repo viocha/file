@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.15
+// @version     2.16
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -177,6 +177,16 @@ function xhamster(wrapper, controls){
 }
 
 function xvideos(wrapper, controls){
+	$(()=>{
+		// 阻止视频预览的touchend事件
+		document.body.addEventListener('touchend', function(event){
+			if (event.target.matches('.thumb-inside')){
+				console.log('event.type:', event.type);
+				event.stopPropagation();
+			}
+		}, true);
+	});
+	
 	$(async()=>{
 		const data = unsafeWindow.html5player;
 		// 视频时长和标题
