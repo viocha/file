@@ -1,8 +1,7 @@
 // ==UserScript==
-// @name        x tool
+// @name        xtool
 // @namespace   Violentmonkey Scripts
-// @match       https://*.pornhub.com/view_video.php*
-// @match       https://*.pornhub.com/interstitial*
+// @match       https://*.pornhub.com/*
 // @match       https://*.xhamster.com/*
 // @match       https://www.xvideos.com/*
 // @require     https://cdn.jsdelivr.net/npm/jquery@3
@@ -11,7 +10,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.24
+// @version     3.0
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -73,12 +72,21 @@ for (const {key, handler, wrapper, controls} of sites){
 
 function pornhub(wrapper, controls){
 	// 跳转广告
-	if (location.href.includes('interstitial')){
+	if (location.pathname.startsWith('/interstitial')){
 		location.href = location.href.replace('interstitial', 'view_video.php');
 		return;
 	}
 	
 	$(()=>{
+		addPreviewListener('.js-videoPreview', '', function(container){
+			return container.dataset['webm'];
+		});
+	});
+	
+	$(()=>{
+		if (!location.pathname.startsWith('/view_video.php')){ // 不是视频页面
+			return;
+		}
 		const idNum = MGP.getPlayerIds()[0].split('_')[1];
 		const data = unsafeWindow[`flashvars_${idNum}`]; // 必须使用unsafeWindow才能访问到
 		
@@ -128,6 +136,7 @@ function pornhub(wrapper, controls){
 	}
 }
 
+
 function xhamster(wrapper, controls){
 	// language=css
 	GM_addStyle(`
@@ -136,6 +145,13 @@ function xhamster(wrapper, controls){
       display : none !important;
     }
 	`);
+	
+	$(()=>{
+		addPreviewListener('.thumb-image-container', '', function(container){
+			return container.dataset['previewvideo'];
+		});
+	});
+	
 	$(()=>{
 		if (!location.pathname.startsWith('/videos')){ // 不是视频页面
 			return;
@@ -176,7 +192,6 @@ function xhamster(wrapper, controls){
 	}
 }
 
-
 function xvideos(wrapper, controls){
 	$(()=>{
 		function getPreviewUrl(container){
@@ -184,7 +199,7 @@ function xvideos(wrapper, controls){
 			return imgUrl.replace(/thumbs[^/]+/, 'videopreview')
 									 .replace(/\/[^/]+$/, '_169.mp4');
 		}
-		addPreviewListener('.thumb-inside', '.thumb', getPreviewUrl);
+		addPreviewListener('.thumb-inside', '.thumb', getPreviewUrl); // 视频没有放在a里面，防止误点击
 	});
 	
 	$(async()=>{
@@ -542,13 +557,15 @@ async function parseM3U8(url){
 }
 
 // previewContainer必须是thumbnailContainer的子元素，getPreviewUrl接收thumbnailContainer元素
-function addPreviewListener(thumbnailContainer, previewContainer,getPreviewUrl){
+function addPreviewListener(thumbnailContainer, previewContainer, getPreviewUrl){
 	// language=css
 	GM_addStyle(`
-      video.preview-video {
-        width : 100%;
-      }
-		`);
+    video.preview-video {
+      position : relative;
+      z-index  : 1; /* 不覆盖xvideos的右上角菜单 */
+      width    : 100%;
+    }
+	`);
 	
 	// 监听touchstart事件
 	document.body.addEventListener('touchstart', function(event){
@@ -568,7 +585,12 @@ function addPreviewListener(thumbnailContainer, previewContainer,getPreviewUrl){
 		const previewUrl = getPreviewUrl(container);
 		$video = $(`<video src="${previewUrl}" class="preview-video" autoplay muted loop></video>`);
 		removeAllVideos(); // 移除之前的视频
-		$(container).find(previewContainer).prepend($video); // 添加新的预览视频
+		
+		if (previewContainer===''){
+			$(container).prepend($video); // 直接添加到缩略图容器
+		} else {
+			$(container).find(previewContainer).prepend($video);
+		}
 		
 		// 监控是否移出视图之外，如果移出了50%，则删除视频元素
 		const observer = new IntersectionObserver((entries)=>{
