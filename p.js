@@ -3,12 +3,13 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://*.pornhub.com/view_video.php*
 // @match       https://*.pornhub.com/interstitial*
+// @match       https://*.xhamster.com/videos*
 // @require     https://cdn.jsdelivr.net/npm/jquery@3
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     1.18
+// @version     2.1
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -31,71 +32,158 @@
 // ==/UserScript==
 
 const sites = [
-	['pornhub.com', pornhub],
+	{
+		key:'pornhub.com',
+		handler:pornhub,
+		wrapper:'#player, .playerWrapper',
+		controls:'.video-actions-menu, .underThumbButtons',
+	},
+	{
+		key:'xhamster.com',
+		handler:xhamster,
+		wrapper:'#video_box',
+		controls:'[data-role="video-controls"]',
+	},
 ];
 
-for (const [site, handler] of sites){
-	if (location.host.includes(site)){
-		handler();
+for (const {key, handler, wrapper, controls} of sites){
+	if (location.host.includes(key)){
+		// 隐藏原始播放器
+		// language=css
+		GM_addStyle(`
+      :is(${wrapper}) > :not(#xg-player) {
+        display : none !important;
+      }
+		`);
+		
+		handler(wrapper, controls);
 		break;
 	}
 }
 
 // TODO ：电脑端原始的声音不能关闭
 
-function pornhub(){
+function pornhub(wrapper, controls){
 	// 跳转广告
 	if (location.href.includes('interstitial')){
 		location.href = location.href.replace('interstitial', 'view_video.php');
 		return;
 	}
 	
-	// 隐藏原始播放器
-	GM_addStyle(`
-	:is(#player, .playerWrapper) > :not(#xg-player){
-		display:none !important;
-	}
-	`);
+	$(()=>{
+		const idNum = MGP.getPlayerIds()[0].split('_')[1];
+		const data = unsafeWindow[`flashvars_${idNum}`]; // 必须使用unsafeWindow才能访问到
+		
+		// 视频时长和标题
+		const duration = data.video_duration;
+		const title = data.video_title;
+		// 所有画质的视频链接
+		const videoUrls = getVideoUrls(data);
+		// 最高画质的视频链接
+		const playerUrl = videoUrls[0].url;
+		
+		// 添加播放器
+		const progressDot = getProgressDot(data);
+		const player = addPlayer(wrapper, playerUrl, {progressDot});
+		
+		// ===================用于添加自定义功能的区域===============
+		const controlContainer = createControlContainer();
+		$(controls).after(controlContainer);
+		
+		// 缩略图快速跳转
+		addFrameList(controlContainer, player, duration);
+		// 重点标记快速跳转
+		addDotList(controlContainer, player, progressDot);
+		// 下载按钮
+		addDownloadButtons(controlContainer, videoUrls, title);
+	});
 	
-	$(pornhubMain);
+	function getProgressDot(data){
+		return data.actionTags
+							 .split(',')
+							 .map((x)=>x.split(':'))
+							 .map((x)=>({text:x[0], time:+x[1]}));
+	}
+	
+	function getVideoUrls(data){
+		return data
+				.mediaDefinitions
+				.filter(x=>x.quality.constructor===String && parseInt(x.quality))
+				.sort((x, y)=>Number(y.quality)-Number(x.quality)) // 按画质排序
+				.map(x=>{
+					return {
+						quality:`${x.quality}p`,
+						// 避免一次请求
+						url:x.videoUrl.replace('master.m3u8', 'index-v1-a1.m3u8'),
+					};
+				});
+	}
 }
 
-async function pornhubMain(){
-	// 获取视频链接并按画质排序
-	const idNum = MGP.getPlayerIds()[0].split('_')[1];
-	const flashvars = unsafeWindow[`flashvars_${idNum}`]; // 必须使用unsafeWindow才能访问到
+function xhamster(wrapper, controls){
+	$(()=>{
+		const data = unsafeWindow.initials;
+		// 视频时长和标题
+		const duration = data.xplayerSettings.duration;
+		const title = data.videoTitle.pageTitle;
+		// 所有画质的视频链接
+		const videoUrls = getVideoUrls(data);
+		// 最高画质的视频链接
+		const playerUrl = videoUrls[0].url;
+		
+		// 添加播放器
+		const player = addPlayer(wrapper, playerUrl);
+		
+		// ===================用于添加自定义功能的区域===============
+		const controlContainer = createControlContainer();
+		$(controls).after(controlContainer);
+		
+		// 缩略图快速跳转
+		addFrameList(controlContainer, player, duration);
+		// 下载按钮
+		addDownloadButtons(controlContainer, videoUrls, title);
+	});
 	
-	// 所有画质的视频链接
-	const videoUrls = getVideoUrls(flashvars);
-	// 最高画质的视频链接
-	const firstUrl = videoUrls[0].url;
-	
-	//=======================西瓜播放器=========================
+	function getVideoUrls(data){
+		return data
+				.xplayerSettings.sources.standard.h264
+				.sort((x, y)=>parseInt(y.quality)-parseInt(x.quality)) // 按画质排序
+				.map(x=>{
+					return {
+						quality:x.quality,
+						url:x.url,
+					};
+				});
+	}
+}
+
+// =================各网站通用函数=====================
+
+function addPlayer(playerWrapper, playerUrl, options = {}){
 	// 播放器html
-	$('#player, .playerWrapper').empty().append(`
+	$(playerWrapper).empty().append(`
 		 <div id="xg-player"></div>
   `);
 	// 播放器css
 	GM_addStyle(GM_getResourceText('playerCss'));
 	
+	const {progressDot} = options;
 	// 播放器配置
 	const config = {
 		id:'xg-player',
-		url:firstUrl,
+		url:playerUrl,
 		autoplay:true, // 自动开始播放
 		volume:0, // 开始时静音
 		playbackRate:false, // 禁用速度设置
 		miniprogress:true, // 当控制栏隐藏时，显示底部的小进度条
 		fluid:true, // 启用后，不会超出屏幕大小
 		plugins:[HlsPlayer], // 插件列表，支持hls播放m3u8链接
+		progressDot, // 视频重点标记
 	};
-	// 视频重点标记
-	config.progressDot = getProgressDot(flashvars);
-	
 	const player = new Player(config);
-	unsafeWindow.player = player;
+	unsafeWindow.player = player; // 用于调试
 	
-	// =====================自动横屏=============================
+	// =====================手机端自动横屏=============================
 	const $controls = $('#xg-player > xg-controls');
 	document.addEventListener('fullscreenchange', ()=>{
 		if (document.fullscreenElement!==null){ // 处于全屏状态
@@ -106,32 +194,26 @@ async function pornhubMain(){
 		}
 	});
 	
-	// ===================用于添加自定义功能的区域===============
-	$('.video-actions-menu, .underThumbButtons') // 电脑和手机选择器不一样
-			.after(`<div id="containers"></div>`);
-	const containerSelector = '#containers';
-	
+	return player;
+}
+
+function createControlContainer(){
 	// language=css
 	GM_addStyle(`
-    #containers > div { /* 每个功能块 */
+    #control-container > div { /* 每个功能块 */
       font-weight   : bold;
       color         : lightgreen;
+      background    : #00000002;
       padding       : 0.1em 0.5em;
       border        : 1px solid dimgray;
       border-radius : 0.3em;
       margin        : 0 0.2em;
     }
 	`);
-	
-	// 缩略图快速跳转
-	addFrameList(flashvars, player, containerSelector);
-	// 重点标记快速跳转
-	addDotList(config.progressDot, player, containerSelector);
-	// 下载按钮
-	addDownloadButtons(flashvars, videoUrls, containerSelector);
+	return $(`<div id="control-container"></div>`)[0];
 }
 
-function addDotList(progressDot, player, containerSelector){
+function addDotList(containerSelector, player, progressDot){
 	// 重点跳转列表
 	const $jumpList = $(`
 		<div id="jumpList">
@@ -187,9 +269,8 @@ function addDotList(progressDot, player, containerSelector){
 	`);
 }
 
-async function addFrameList(flashvars, player, containerSelector){
+async function addFrameList(containerSelector, player, duration){
 	// 获取截图时间列表
-	const duration = flashvars.video_duration;
 	const skip = 5; // 跳过开头的时间
 	const size = Math.min(duration-skip, 10);
 	const step = Math.floor((duration-skip)/size);
@@ -259,8 +340,7 @@ async function addFrameList(flashvars, player, containerSelector){
 	}
 }
 
-function addDownloadButtons(flashvars, videoUrls, containerSelector){
-	const title = flashvars.video_title;
+function addDownloadButtons(containerSelector, videoUrls, title){
 	const $buttonContainer = $(`
     <div id="downloadUrls">
       下载链接：
@@ -331,27 +411,6 @@ async function* captureScreenshots(videoUrl, timeList){
 	}
 }
 
-function getProgressDot(flashvars){
-	return flashvars.actionTags
-									.split(',')
-									.map((x)=>x.split(':'))
-									.map((x)=>({text:x[0], time:+x[1]}));
-}
-
-function getVideoUrls(flashvars){
-	return flashvars
-			.mediaDefinitions
-			.filter(x=>x.quality.constructor===String && parseInt(x.quality))
-			.sort((x, y)=>Number(y.quality)-Number(x.quality)) // 按画质排序
-			.map(x=>{
-				return {
-					quality:`${x.quality}p`,
-					// 避免一次请求
-					url:x.videoUrl.replace('master.m3u8', 'index-v1-a1.m3u8'),
-				};
-			});
-}
-
 function formatTime(time){
 	const minutes = Math.floor(time/60).toString().padStart(2, '0');
 	const seconds = (time%60).toString().padStart(2, '0');
@@ -362,6 +421,8 @@ $(main);
 
 async function main(){
 }
+
+// ====================弃用的函数==========================
 
 // 获取最后一张图片的缩略图个数
 async function getThumbCount(imageUrl){
