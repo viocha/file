@@ -10,7 +10,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.7
+// @version     2.8
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -186,7 +186,8 @@ function addPlayer(playerWrapper, playerUrl, options = {}){
 			disablePress:false, // 开启长按倍速
 			pressRate:3, // 长按3倍速
 			gestureY:false, // 禁用手势调节亮度音量
-			disableSeekIcon:true, // 禁用中间的时间预览
+			disableSeekIcon:true, // 禁用seek图标
+			disableTimeProgress:true, // 禁用时间进度条
 		},
 		plugins:[],  // 插件列表
 		progressDot, // 视频重点标记
@@ -224,6 +225,7 @@ function createControlContainer(){
       border        : 1px solid dimgray;
       border-radius : 0.3em;
       margin        : 0 0.2em;
+      line-height   : 1.8;
     }
 	`);
 	return $(`<div id="control-container"></div>`)[0];
