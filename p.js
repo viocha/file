@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.18
+// @version     2.19
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -49,7 +49,7 @@ const sites = [
 	{
 		key:'xvideos',
 		handler:xvideos,
-		wrapper:'#content',
+		wrapper:'#video-player-bg',
 		controls:'#v-actions-container',
 	},
 ];
@@ -136,10 +136,10 @@ function xhamster(wrapper, controls){
       display : none !important;
     }
 	`);
-	if (!location.pathname.startsWith('/videos')){ // 不是视频页面
-		return;
-	}
 	$(()=>{
+		if (!location.pathname.startsWith('/videos')){ // 不是视频页面
+			return;
+		}
 		const data = unsafeWindow.initials;
 		// 视频时长和标题
 		const duration = data.xplayerSettings.duration;
@@ -221,6 +221,9 @@ function xvideos(wrapper, controls){
 	});
 	
 	$(async()=>{
+		if (!location.pathname.startsWith('/video')){ // 不是视频页面
+			return;
+		}
 		const data = unsafeWindow.html5player;
 		// 视频时长和标题
 		const title = data.video_title;
