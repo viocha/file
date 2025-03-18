@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://*.pornhub.com/view_video.php*
 // @match       https://*.pornhub.com/interstitial*
-// @match       https://*.xhamster.com/videos*
+// @match       https://*.xhamster.com/*
 // @match       https://www.xvideos.com/video*
 // @require     https://cdn.jsdelivr.net/npm/jquery@3
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.14
+// @version     2.15
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -32,8 +32,6 @@
 // @grant GM_xmlhttpRequest
 // @grant GM_download
 // ==/UserScript==
-
-// TODO：验证seek会不会自动播放
 
 const sites = [
 	{
