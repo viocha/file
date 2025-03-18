@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.21
+// @version     2.22
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -191,7 +191,6 @@ function xvideos(wrapper, controls){
 				return;
 			}
 			event.stopPropagation();
-			console.log(event); // todo
 			// 如果已有视频，则不再添加
 			let $video = $(container).find('.preview-video');
 			if ($video.length){
@@ -210,7 +209,6 @@ function xvideos(wrapper, controls){
 			const observer = new IntersectionObserver((entries)=>{
 				for (const entry of entries){
 					if (entry.intersectionRatio<=0.5){
-						console.log('元素可见部分低于50%，删除元素');
 						entry.target.remove();
 						observer.disconnect();
 						return;
