@@ -9,7 +9,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.2
+// @version     2.3
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -177,6 +177,10 @@ function addPlayer(playerWrapper, playerUrl, options = {}){
 		playbackRate:false, // 禁用速度设置
 		miniprogress:true, // 当控制栏隐藏时，显示底部的小进度条
 		fluid:true, // 启用后，不会超出屏幕大小
+		mobile:{
+			disablePress:false, // 弃用长按倍速
+			pressRate:3, // 长按3倍速
+		},
 		plugins:[HlsPlayer], // 插件列表，支持hls播放m3u8链接
 		progressDot, // 视频重点标记
 	};
