@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.23
+// @version     2.24
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -176,65 +176,15 @@ function xhamster(wrapper, controls){
 	}
 }
 
+
 function xvideos(wrapper, controls){
 	$(()=>{
-		// language=css
-		GM_addStyle(`
-      video.preview-video {
-        width : 100%;
-      }
-		`);
-		// 阻止视频预览的touchstart事件
-		document.body.addEventListener('touchstart', function(event){
-			const container = event.target.closest('.thumb-inside');
-			if (!container){
-				return;
-			}
-			event.stopPropagation();
-			// 如果已有视频，则不再添加
-			let $video = $(container).find('.preview-video');
-			if ($video.length){
-				$video[0].play(); // 开始播放
-				return;
-			}
-			// 添加预览视频
+		function getPreviewUrl(container){
 			const imgUrl = $(container).find('.thumb > a > img').prop('src');
-			const previewUrl = getPreviewUrl(imgUrl);
-			$video = $(`<video src="${previewUrl}" class="preview-video" autoplay muted loop></video>`);
-			
-			removeAllVideos(); // 移除之前的视频
-			$(container).find('.thumb').prepend($video); // 添加新的预览视频
-			
-			// 监控是否移出视图之外，如果移出了50%，则删除视频元素
-			const observer = new IntersectionObserver((entries)=>{
-				for (const entry of entries){
-					if (entry.intersectionRatio<=0.5){
-						entry.target.remove();
-						observer.disconnect();
-						return;
-					}
-				}
-			}, {threshold:[0.5]}); // 变化范围跨越了0.5才触发
-			
-			observer.observe($video[0]);
-			$video.data('observer', observer);
-		}, true);
-		
-		// 如果点击了视频之外的区域，则删除所有预览视频
-		document.body.addEventListener('click', function(event){
-			if (!event.target.closest('.thumb-inside')){
-				removeAllVideos();
-			}
-		});
-		
-		function removeAllVideos(){
-			$('.preview-video').each((_, video)=>$(video).data('observer').disconnect())
-												 .remove();
-		}
-		function getPreviewUrl(imgUrl){
 			return imgUrl.replace(/thumbs[^/]+/, 'videopreview')
 									 .replace(/\/[^/]+$/, '_169.mp4');
 		}
+		addPreviewListener('.thumb-inside', '.thumb', getPreviewUrl);
 	});
 	
 	$(async()=>{
@@ -589,6 +539,63 @@ async function parseM3U8(url){
 	}
 	// 按画质排序
 	return result.sort((x, y)=>parseInt(y.quality)-parseInt(x.quality));
+}
+
+// previewContainer必须是thumbnailContainer的子元素，getPreviewUrl接收thumbnailContainer元素
+function addPreviewListener(thumbnailContainer, previewContainer,getPreviewUrl){
+	// language=css
+	GM_addStyle(`
+      video.preview-video {
+        width : 100%;
+      }
+		`);
+	
+	// 监听touchstart事件
+	document.body.addEventListener('touchstart', function(event){
+		const container = event.target.closest(thumbnailContainer);
+		if (!container){
+			return;
+		}
+		event.stopPropagation(); // 阻止其他监听器执行
+		
+		// 如果已有视频，则不再添加
+		let $video = $(container).find('.preview-video');
+		if ($video.length){
+			return;
+		}
+		
+		// 添加预览视频
+		const previewUrl = getPreviewUrl(container);
+		$video = $(`<video src="${previewUrl}" class="preview-video" autoplay muted loop></video>`);
+		removeAllVideos(); // 移除之前的视频
+		$(container).find(previewContainer).prepend($video); // 添加新的预览视频
+		
+		// 监控是否移出视图之外，如果移出了50%，则删除视频元素
+		const observer = new IntersectionObserver((entries)=>{
+			for (const entry of entries){
+				if (entry.intersectionRatio<=0.5){
+					entry.target.remove();
+					observer.disconnect();
+					return;
+				}
+			}
+		}, {threshold:[0.5]}); // 变化范围跨越了0.5才触发
+		
+		observer.observe($video[0]);
+		$video.data('observer', observer); // 保存observer，以便移除元素时停止监听
+	}, true);
+	
+	// 如果点击了视频之外的区域，则删除所有预览视频
+	document.body.addEventListener('click', function(event){
+		if (!event.target.closest(thumbnailContainer)){
+			removeAllVideos();
+		}
+	});
+	
+	function removeAllVideos(){
+		$('.preview-video').each((_, video)=>$(video).data('observer').disconnect())
+											 .remove();
+	}
 }
 
 function formatTime(time){
