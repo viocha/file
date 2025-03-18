@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.19
+// @version     2.20
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -196,7 +196,7 @@ function xvideos(wrapper, controls){
 			const $video = $(`<video src="${previewUrl}" class="preview-video" autoplay muted></video>`);
 			
 			$('.preview-video').remove(); // 移除之前的视频
-			$(container).find('.thumb > a > .videopv').prepend($video); // 添加新的预览视频
+			$(container).find('.thumb').prepend($video); // 添加新的预览视频
 			
 			// 监控是否移出视图之外，如果移出了50%，则删除视频元素
 			const observer = new IntersectionObserver((entries)=>{
