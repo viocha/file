@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.11
+// @version     2.12
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -278,7 +278,7 @@ function createControlContainer(){
       border        : 1px solid dimgray;
       border-radius : 0.3em;
       margin        : 0 0.2em;
-      line-height   : 1.8;
+      line-height   : 1.5;
     }
 	`);
 	return $(`<div id="control-container"></div>`)[0];
@@ -436,6 +436,7 @@ function addDownloadButtons(containerSelector, videoUrls, title){
 	// language=css
 	GM_addStyle(`
     div#downloadUrls > :is(a,button) {
+      display          : inline-block;
       font-weight      : bold;
       font-size        : 14px;
       border           : 1px solid rgb(255, 144, 0);
