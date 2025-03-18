@@ -10,7 +10,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.8
+// @version     2.9
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -218,8 +218,9 @@ function createControlContainer(){
 	// language=css
 	GM_addStyle(`
     #control-container > div { /* 每个功能块 */
+      font-size     : 14px;
       font-weight   : bold;
-      color         : lightgreen;
+      color         : #70bfff;
       background    : #00000002;
       padding       : 0.1em 0.5em;
       border        : 1px solid dimgray;
@@ -388,6 +389,8 @@ function addDownloadButtons(containerSelector, videoUrls, title){
 	// language=css
 	GM_addStyle(`
     div#downloadUrls > :is(a,button) {
+      font-weight      : bold;
+      font-size        : 14px;
       border           : 1px solid rgb(255, 144, 0);
       border-radius    : 0.3em;
       padding          : 0.1em 0.4em;
