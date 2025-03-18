@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.22
+// @version     2.23
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -232,7 +232,7 @@ function xvideos(wrapper, controls){
 												 .remove();
 		}
 		function getPreviewUrl(imgUrl){
-			return imgUrl.replace('thumbs169ll', 'videopreview')
+			return imgUrl.replace(/thumbs[^/]+/, 'videopreview')
 									 .replace(/\/[^/]+$/, '_169.mp4');
 		}
 	});
