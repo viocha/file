@@ -10,7 +10,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     3.1
+// @version     3.2
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -374,7 +374,7 @@ function addDotList(containerSelector, player, progressDot){
 
 async function addFrameList(containerSelector, player, duration, hls = true){
 	// 获取截图时间列表
-	const skip = 5; // 跳过开头的时间
+	const skip = 10; // 跳过开头的时间
 	const size = Math.min(duration-skip, 10);
 	const step = Math.floor((duration-skip)/size);
 	const timeList = Array.from({length:size}, (_, i)=>skip+i*step);
@@ -494,7 +494,6 @@ async function* captureScreenshots(videoUrl, timeList, hls){
 	const config = {
 		el:$('<div></div>')[0],
 		url:videoUrl,
-		seekedStatus:'pause', // seek操作之后暂停
 	};
 	if (hls){
 		Object.assign(config, {
@@ -513,17 +512,17 @@ async function* captureScreenshots(videoUrl, timeList, hls){
 		});
 	}
 	const player = new Player(config);
-	player.seek(0); // 启动数据加载
+	player.seek(0);
 	await new Promise((resolve, reject)=>{
 		player.on(Player.Events.CANPLAY, resolve);
-		setTimeout(reject, 10000, '视频加载超时');
+		setTimeout(reject, 10000, 'seek超时');
 	});
 	for (const time of timeList){
 		player.seek(time);
-		if (!player.isCanPlay){
+		if (player.bufferedPoint.end<time){
 			await new Promise((resolve, reject)=>{
 				player.on(Player.Events.CANPLAY, resolve);
-				setTimeout(reject, 10000, '视频加载超时');
+				setTimeout(reject, 10000, 'seek超时');
 			});
 		}
 		const imgDataUrl = await player.getPlugin('screenShot')
