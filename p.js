@@ -11,7 +11,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.13
+// @version     2.14
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -138,6 +138,9 @@ function xhamster(wrapper, controls){
       display : none !important;
     }
 	`);
+	if (!location.pathname.startsWith('/videos')){ // 不是视频页面
+		return;
+	}
 	$(()=>{
 		const data = unsafeWindow.initials;
 		// 视频时长和标题
@@ -149,7 +152,7 @@ function xhamster(wrapper, controls){
 		const playerUrl = videoUrls[0].url;
 		
 		// 添加播放器
-		const player = addPlayer(wrapper, playerUrl, {hls:false});
+		const player = addPlayer(wrapper, playerUrl, {hls:false, videoUrls});
 		
 		// ===================用于添加自定义功能的区域===============
 		const controlContainer = createControlContainer();
@@ -217,7 +220,7 @@ function xvideos(wrapper, controls){
 
 // 默认弃用hls，播放mp4时需要禁用
 function addPlayer(playerWrapper, playerUrl, options = {}){
-	const {progressDot, hls = true} = options;
+	let {progressDot, hls = true, videoUrls} = options;
 	// 播放器html
 	$(playerWrapper).empty().append(`
 		 <div id="xg-player"></div>
@@ -248,6 +251,15 @@ function addPlayer(playerWrapper, playerUrl, options = {}){
 		config.plugins.push(HlsPlayer); // 播放m3u8链接
 	} else {
 		config.plugins.push(Mp4Plugin); // 播放mp4链接
+	}
+	if (videoUrls){ // 支持切换画质
+		videoUrls = videoUrls.slice(0, 3); // 最多三个画质
+		config.definition = {
+			list:videoUrls.map(x=>({definition:x.quality, text:x.quality, url:x.url})),
+			// 默认跳过4k画质
+			defaultDefinition:videoUrls[0].quality==='2160p'? videoUrls[1].quality: videoUrls[0].quality,
+		};
+		delete config.url; // 由definition提供链接
 	}
 	const player = new Player(config);
 	unsafeWindow.player = player; // 用于调试
