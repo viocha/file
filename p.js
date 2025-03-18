@@ -4,14 +4,14 @@
 // @match       https://*.pornhub.com/view_video.php*
 // @match       https://*.pornhub.com/interstitial*
 // @match       https://*.xhamster.com/*
-// @match       https://www.xvideos.com/video*
+// @match       https://www.xvideos.com/*
 // @require     https://cdn.jsdelivr.net/npm/jquery@3
 // @require     https://cdn.jsdelivr.net/npm/@violentmonkey/dom@2
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.17
+// @version     2.18
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -185,6 +185,7 @@ function xvideos(wrapper, controls){
 				return;
 			}
 			event.stopPropagation();
+			console.log(event); // todo
 			// 如果已有视频，则不再添加
 			if ($(container).find('.preview-video').length){
 				return;
