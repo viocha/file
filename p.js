@@ -9,7 +9,7 @@
 // @require     https://unpkg.com/xgplayer@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     2.3
+// @version     2.4
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -108,7 +108,7 @@ function pornhub(wrapper, controls){
 	function getVideoUrls(data){
 		return data
 				.mediaDefinitions
-				.filter(x=>x.quality.constructor===String && parseInt(x.quality))
+				.filter(x=>parseInt(x.quality))
 				.sort((x, y)=>Number(y.quality)-Number(x.quality)) // 按画质排序
 				.map(x=>{
 					return {
@@ -147,6 +147,7 @@ function xhamster(wrapper, controls){
 	function getVideoUrls(data){
 		return data
 				.xplayerSettings.sources.standard.h264
+				.filter(x=>parseInt(x.quality))
 				.sort((x, y)=>parseInt(y.quality)-parseInt(x.quality)) // 按画质排序
 				.map(x=>{
 					return {
@@ -178,8 +179,10 @@ function addPlayer(playerWrapper, playerUrl, options = {}){
 		miniprogress:true, // 当控制栏隐藏时，显示底部的小进度条
 		fluid:true, // 启用后，不会超出屏幕大小
 		mobile:{
-			disablePress:false, // 弃用长按倍速
+			disablePress:false, // 开启长按倍速
 			pressRate:3, // 长按3倍速
+			gestureY:false, // 禁用手势调节亮度音量
+			disableActive:false, // 禁用中间的时间预览
 		},
 		plugins:[HlsPlayer], // 插件列表，支持hls播放m3u8链接
 		progressDot, // 视频重点标记
