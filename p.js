@@ -10,7 +10,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     3.2.2
+// @version     3.2.3
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start

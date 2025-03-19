@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>画面快速跳转：</title>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3"></script>
+<style>
+  body {
+    font-family      : Arial, sans-serif;
+    background-color : #f7f7f7;
+    margin           : 0;
+    padding          : 20px;
+  }
+</style>
+</head>
+<body>
+
+<script>
+  let events = ['mouseenter', 'mouseleave', 'mouseover', 'mouseout', 'mousemove'];
+  events=['touchstart', 'touchmove', 'touchend', 'touchcancel'];
+  for (const event of events){
+    $0.addEventListener(event, function(event){
+      console.log('event.type:', event.type);
+      event.stopPropagation(); // 阻止事件进入目标阶段和冒泡阶段
+    }, true);
+  }
+</script>
+
+</body>
+</html>
