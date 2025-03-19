@@ -10,7 +10,7 @@
 // @require     https://unpkg.com/xgplayer-hls@latest/dist/index.min.js
 // @require     https://unpkg.com/xgplayer-mp4@latest/dist/index.min.js
 // @resource    playerCss https://unpkg.com/xgplayer@3.0.9/dist/index.min.css
-// @version     3.2.1
+// @version     3.2.2
 // @author      viocha
 // @description 2023/9/17 11:34:50
 // @run-at      document-start
@@ -518,11 +518,11 @@ async function* captureScreenshots(videoUrl, timeList, hls){
 	// todo
 	unsafeWindow.p = player;
 	Object.values(Player.Events).forEach(eventName=>{
-		player.on(eventName, ()=>console.log(eventName,
-				player.isCanplay,
-				player.bufferedPoint.end,
-				player.seeking,
+		player.on(eventName, ()=>console.log('触发：', eventName,
 				player.state, player.readyState,
+				'isCanplay=', player.isCanplay,
+				'bufferedPoint.end=', player.bufferedPoint.end,
+				'player.seeking', player.seeking,
 		));
 	});
 	
@@ -536,23 +536,23 @@ async function* captureScreenshots(videoUrl, timeList, hls){
 		player.seek(time);
 		
 		// todo
-		console.log('seek', time);
+		console.log(time, 'seek');
 		
 		if (player.bufferedPoint.end<time){
 			// todo
-			console.log('waiting', time);
+			console.log(time, 'waiting');
 			await new Promise((resolve, reject)=>{
 				player.on(Player.Events.CANPLAY, resolve);
 				setTimeout(reject, 10000, 'seek超时');
 			});
 		}
 		
-		console.log('capture', time);
+		console.log(time, 'capture');
 		const imgDataUrl = await player.getPlugin('screenShot')
 																	 .shot(player.video.videoWidth, player.video.videoHeight,
 																			 {quality:1, type:'image/jpg'});
-		console.log('captured', time);
-		await new Promise(r=>setTimeout(r, 2000)); // 等待2秒，查看是否有其他事件
+		console.log(time, 'captured');
+		await new Promise(r=>setTimeout(r, 3000)); // 等待2秒，查看是否有其他事件
 		yield [time, imgDataUrl];
 	}
 }
