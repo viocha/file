@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo 123",
+    "test1": "echo 123abc"
   },
   "repository": {
     "type": "git",
